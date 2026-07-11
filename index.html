@@ -4,20 +4,71 @@
     <head>
         <title>Test Page</title>
         <style>
+            :root {
+                /* comment example */
+                --bg-color: #000000;
+                --text-color: #ffffff;
+                --primary-color: #3498db; /* blue nice */
+                --card-bg: #f0f0f0;
+                --border-radius: 12px;
+            }
             body {
-                background-color: #000000;
+                background-color: var(--bg-color);
+                color: var(--text-color);
                 font-family: Arial, sans-serif;
+                transition: all 0.3s ease; /* Makes theme-switching smooth */
             }
             h1 {
-                color: #ffffff;
+                color: var(--text-color);
             }
             p {
-                color: #00d9ff;
+                color: var(--text-color);
+            }
+            div p {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 20px;
+                color: var(--primary-color);
+            }
+            .my_box {
+                width: 200px;
+                height: 200px;
+                background-color: var(--card-bg);
+                margin: 20px auto;
+            }
+            button {
+                background: var(--primary-color);
+                color: var(--text-color);
+                border: 2px solid var(--text-color);
+                padding: 10px 20px;
+                border-radius: var(--border-radius);
+                cursor: pointer;
             }
         </style>
     </head>
     <body>
         <h1>Hello, World!</h1>
         <p>This is a simple test page.</p>
+
+        <div>
+            <p>Click the button below to change the background color:</p>
+        </div>
+
+        <button onclick="changeBackgroundColor()">Change Background Color</button>
+
+        <script>
+            function changeBackgroundColor() {
+                const colors = ['#000000', '#1a1a1a', '#333333', '#4d4d4d', '#666666'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                document.body.style.backgroundColor = randomColor;
+            }
+        </script>
+        
+        <div class="my_box">
+            <div>
+                <p>Centered Text with box?</p>
+            </div>
+        </div>
     </body>
 </html>
