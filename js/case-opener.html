@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Star Case Opener | The Forces Be With You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="blackhole" aria-hidden="true"></div>
+<canvas id="particles-canvas" aria-hidden="true"></canvas>
+
+<header class="topbar">
+  <a href="index.html" class="brand">Home</a>
+  <nav>
+    <a href="activity.html">Activity</a>
+    <a href="sample.html">Sample Problems</a>
+    <a href="credits.html">Credits</a>
+    <a href="playground.html">Playground</a>
+  </nav>
+</header>
+
+<main class="game-page">
+  <h1>Star Case Opener</h1>
+  <p class="muted">Open cases to collect real stars. Higher tier stars are rarer.</p>
+
+  <div class="case-controls">
+    <button id="open-btn" class="primary" type="button">Open Case</button>
+    <button id="skip-btn" class="ghost hidden" type="button">Skip Animation</button>
+  </div>
+
+  <div id="reel-viewport" class="reel-viewport">
+    <div id="reel-track" class="reel-track"></div>
+    <div class="reel-centerline"></div>
+  </div>
+
+  <div id="result-panel" class="result-panel hidden"></div>
+
+  <section class="pedia-section">
+    <h2>Pedia</h2>
+    <p id="pedia-count" class="muted"></p>
+    <div id="pedia-grid" class="pedia-grid"></div>
+  </section>
+
+  <div class="actions">
+    <a href="playground.html" class="ghost">Back to Playground</a>
+  </div>
+</main>
+
+<script type="module" src="js/games/case-opener.js"></script>
+<script src="js/particles.js" defer></script>
+</body>
+</html>

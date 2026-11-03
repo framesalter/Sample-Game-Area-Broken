@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feed a Black Hole | The Forces Be With You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="blackhole" aria-hidden="true"></div>
+<div id="whitehole" aria-hidden="true"></div>
+<canvas id="particles-canvas" aria-hidden="true"></canvas>
+
+<button id="easteregg-btn" class="easteregg-btn" type="button" aria-label="Mystery control"></button>
+
+<header class="topbar">
+  <a href="index.html" class="brand">Home</a>
+  <nav>
+    <a href="activity.html">Activity</a>
+    <a href="sample.html">Sample Problems</a>
+    <a href="credits.html">Credits</a>
+    <a href="playground.html">Playground</a>
+  </nav>
+</header>
+
+<main class="game-page">
+  <h1>Feed a Black Hole</h1>
+  <p class="muted">Click objects to feed them into the void. Repetition lesser returns.</p>
+
+  <div class="stats-bar">
+    <div class="stat"><span class="stat-value" id="stat-points">0</span><span class="stat-label">Points</span></div>
+    <div class="stat"><span class="stat-value" id="stat-fed">0</span><span class="stat-label">Objects Fed</span></div>
+    <div class="stat"><span class="stat-value" id="stat-mass">0</span><span class="stat-label">Total Mass</span></div>
+  </div>
+
+  <p id="eject-msg" class="eject-msg hidden"></p>
+
+  <div id="feed-row" class="feed-row"></div>
+
+  <div class="actions">
+    <a href="playground.html" class="ghost">Back to Playground</a>
+  </div>
+</main>
+
+<script type="module" src="js/games/feed-blackhole.js"></script>
+<script src="js/particles.js" defer></script>
+</body>
+</html>

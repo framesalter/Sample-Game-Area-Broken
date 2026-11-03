@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Playground | The Forces Be With You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="blackhole" aria-hidden="true"></div>
+<canvas id="particles-canvas" aria-hidden="true"></canvas>
+
+<header class="topbar">
+  <a href="index.html" class="brand">Home</a>
+  <nav>
+    <a href="activity.html">Activity</a>
+    <a href="sample.html">Sample Problems</a>
+    <a href="credits.html">Credits</a>
+    <button id="settings-btn" type="button" class="ghost">Settings</button>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Mini-games</h1>
+    <p class="muted">Playing with food</p>
+  </section>
+
+  <h2 class="section-header">Games</h2>
+
+  <div class="game-cards">
+    <a href="case-opener.html" class="game-card">
+      <div class="game-card-icon" aria-hidden="true">&#9733;</div>
+      <h2>Star Case Opener</h2>
+      <p class="muted">Open cases to collect real stars. Rarity follows stellar classification and temperature.</p>
+      <span class="game-card-cta">Play</span>
+    </a>
+    <a href="feed-blackhole.html" class="game-card">
+      <div class="game-card-icon" aria-hidden="true">&#9673;</div>
+      <h2>Feed a Black Hole</h2>
+      <p class="muted">Feed a black hole asteroids, moons, planets, stars, and supergiants. Watch the counters climb.</p>
+      <span class="game-card-cta">Play</span>
+    </a>
+  </div>
+
+  <h2 class="section-header">How it works</h2>
+  <div class="about-panel">
+    <p><strong>Star Case Opener.</strong> Each case rolls a random star. Collection may reset after leaving the page.</p>
+    <p><strong>Feed a Black Hole.</strong> Click objects to send them into the void. Repeated use of the same object gives lesser points.</p>
+    <p class="muted">No data is collected or transmitted.</p>
+  </div>
+</main>
+
+<dialog id="settings-dialog">
+  <form method="dialog">
+    <h2>Settings</h2>
+    <label><input type="checkbox" id="opt-hints"> Show hint button during quiz</label>
+    <label><input type="checkbox" id="opt-particles"> Show background particles</label>
+    <p class="muted">Hints are off by default. Particles are on by default and can be turned off on lower-end devices.</p>
+    <button id="settings-save" class="primary" type="button">Save</button>
+    <button class="ghost" type="button" onclick="document.getElementById('settings-dialog').close()">Cancel</button>
+  </form>
+</dialog>
+
+<script>
+  const dlg = document.getElementById("settings-dialog");
+  const hints = document.getElementById("opt-hints");
+  const parts = document.getElementById("opt-particles");
+
+  document.getElementById("settings-btn").addEventListener("click", () => {
+    try {
+      const s = JSON.parse(localStorage.getItem("sat.settings") || "{}");
+      hints.checked = s.hints === true;
+      parts.checked = s.particles !== false;
+    } catch (_) {
+      hints.checked = false;
+      parts.checked = true;
+    }
+    dlg.showModal();
+  });
+
+  document.getElementById("settings-save").addEventListener("click", () => {
+    const s = { hints: hints.checked, particles: parts.checked };
+    localStorage.setItem("sat.settings", JSON.stringify(s));
+    if (window.__particles) window.__particles.apply();
+    dlg.close();
+  });
+</script>
+
+<script src="js/particles.js" defer></script>
+</body>
+</html>

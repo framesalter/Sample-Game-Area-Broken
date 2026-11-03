@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Credits | The Forces Be With You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body id="top">
+<div id="blackhole" aria-hidden="true"></div>
+<canvas id="particles-canvas" aria-hidden="true"></canvas>
+
+<header class="topbar">
+  <a href="index.html" class="brand">Home</a>
+  <nav>
+    <a href="activity.html">Activity</a>
+    <a href="sample.html">Sample Problems</a>
+    <a href="credits.html">Credits</a>
+    <button id="settings-btn" type="button" class="ghost">Settings</button>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="eyebrow">Credits</p>
+    <p class="muted">Quite possible</p>
+  </section>
+
+  <div class="about-panel">
+    <h2>About this worksheet</h2>
+    <p>This worksheet is intended to help senior high school learners understand physics in a completely different way. Stretching the vacuum of this worksheet is a set of problems that aims to unite the knowledge of physics to the frontal cortex. Completing this worksheet will strengthen learners’ problem-solving skills and help them apply physics concepts to real-world situations.
+</p>
+  </div>
+
+  <!-- LEADER: edit name and role text here. -->
+  <h2 class="section-header">Leader</h2>
+  <div class="leader-card">
+    <div class="credit-card">
+      <h3>Leader</h3>
+      <p class="credit-name">Name Here</p>
+      <p class="muted">Leading the team, rash employer, great communicator and prime decision-maker</p>
+    </div>
+  </div>
+
+  <!-- MEMBERS: each <div class="credit-card"> inside .carousel-track is one slide.
+       Add or remove slides by copying a whole block. The dots and controls adapt. -->
+  <h2 class="section-header">Members</h2>
+  <div class="member-carousel" role="region" aria-label="Member carousel" aria-roledescription="carousel">
+    <div class="carousel-viewport">
+      <div class="carousel-track">
+        <div class="credit-card">
+          <h3>Member 1</h3>
+          <p class="credit-name">Johariz</p>
+          <p class="muted">Good memba</p>
+        </div>
+        <div class="credit-card">
+          <h3>Member 2</h3>
+          <p class="credit-name">Elijah</p>
+          <p class="muted">Good memba</p>
+        </div>
+        <div class="credit-card">
+          <h3>Member 3</h3>
+          <p class="credit-name">Rupert</p>
+          <p class="muted">Good memba</p>
+        </div>
+      </div>
+    </div>
+    <div class="carousel-dots" id="carousel-dots" aria-hidden="true"></div>
+    <div class="carousel-controls">
+      <button type="button" class="carousel-prev" aria-label="Previous member">Previous</button>
+      <button type="button" class="carousel-pause" aria-label="Pause rotation">Pause</button>
+      <button type="button" class="carousel-next" aria-label="Next member">Next</button>
+    </div>
+  </div>
+
+  <!-- SOURCE: edit text here. -->
+  <h2 class="section-header">Source</h2>
+  <div class="leader-card">
+    <div class="credit-card">
+      <h3>Source</h3>
+      <p class="credit-name">HSCprep</p>
+      <p class="muted">Energy Changes in Orbital Motion</p>
+    </div>
+  </div>
+
+  <h2 class="section-header">Built with</h2>
+  <div class="about-panel">
+    <ul class="edit-list">
+      <li><code>HTML</code> — structure and content</li>
+      <li><code>CSS</code> — styling and layout</li>
+      <li><code>JavaScript</code> — functionality</li>
+      <li><code>GitHub</code> — hosts the site through <code>GitHub Pages</code></li>
+      <li><code>VSCode</code> — editing and live preview</li>
+    </ul>
+  </div>
+</main>
+
+<div class="wandering-wrap">
+  <a href="playground.html" class="wandering-btn" aria-label="Enter playground">?</a>
+</div>
+
+<footer class="credits-footer">
+  <div class="footer-inner">
+    <p class="muted">A school project doesn't need a license so don't even bother with it.</p>
+  </div>
+</footer>
+
+<dialog id="settings-dialog">
+  <form method="dialog">
+    <h2>Settings</h2>
+    <label><input type="checkbox" id="opt-hints"> Show hint button during quiz</label>
+    <label><input type="checkbox" id="opt-particles"> Show background particles</label>
+    <p class="muted">Hints are off by default. Particles are on by default and can be turned off on lower-end devices.</p>
+    <button id="settings-save" class="primary" type="button">Save</button>
+    <button class="ghost" type="button" onclick="document.getElementById('settings-dialog').close()">Cancel</button>
+  </form>
+</dialog>
+
+<script>
+  // ---- Settings dialog ----
+  const dlg = document.getElementById("settings-dialog");
+  const hints = document.getElementById("opt-hints");
+  const parts = document.getElementById("opt-particles");
+
+  document.getElementById("settings-btn").addEventListener("click", () => {
+    try {
+      const s = JSON.parse(localStorage.getItem("sat.settings") || "{}");
+      hints.checked = s.hints === true;
+      parts.checked = s.particles !== false;
+    } catch (_) {
+      hints.checked = false;
+      parts.checked = true;
+    }
+    dlg.showModal();
+  });
+
+  document.getElementById("settings-save").addEventListener("click", () => {
+    const s = { hints: hints.checked, particles: parts.checked };
+    localStorage.setItem("sat.settings", JSON.stringify(s));
+    if (window.__particles) window.__particles.apply();
+    dlg.close();
+  });
+
+  // ---- Wandering button ----
+  const isTouch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  const wrap = document.querySelector(".wandering-wrap");
+  const wBtn = document.querySelector(".wandering-btn");
+  if (wrap && wBtn && !isTouch) {
+    wrap.addEventListener("mouseenter", () => {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 14 + Math.random() * 18;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+      wBtn.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    });
+    wrap.addEventListener("mouseleave", () => {
+      wBtn.style.transform = "translate(-50%, -50%)";
+    });
+  }
+
+  // ---- Member carousel ----
+  (function () {
+    const carousel = document.querySelector(".member-carousel");
+    if (!carousel) return;
+    const track = carousel.querySelector(".carousel-track");
+    const cards = Array.from(track.children);
+    const prevBtn = carousel.querySelector(".carousel-prev");
+    const nextBtn = carousel.querySelector(".carousel-next");
+    const pauseBtn = carousel.querySelector(".carousel-pause");
+    const dotsContainer = document.getElementById("carousel-dots");
+
+    const INTERVAL = 5000;
+    let current = 0;
+    let paused = false;
+    let hovered = false;
+    let timer = null;
+
+    // Build dots
+    cards.forEach((_, i) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "carousel-dot" + (i === 0 ? " active" : "");
+      dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+      dot.addEventListener("click", () => {
+        goTo(i);
+        resetTimer();
+      });
+      dotsContainer.appendChild(dot);
+    });
+    const dots = Array.from(dotsContainer.children);
+
+    function goTo(index) {
+      current = ((index % cards.length) + cards.length) % cards.length;
+      track.style.transform = `translateX(-${current * 100}%)`;
+      dots.forEach((d, i) => d.classList.toggle("active", i === current));
+    }
+
+    function next() { goTo(current + 1); resetTimer(); }
+    function prev() { goTo(current - 1); resetTimer(); }
+
+    function resetTimer() {
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (paused || hovered) return;
+      timer = setTimeout(() => {
+        goTo(current + 1);
+        resetTimer();
+      }, INTERVAL);
+    }
+
+    function togglePause() {
+      paused = !paused;
+      pauseBtn.textContent = paused ? "Resume" : "Pause";
+      pauseBtn.setAttribute("aria-label", paused ? "Resume rotation" : "Pause rotation");
+      pauseBtn.classList.toggle("paused", paused);
+      if (paused) {
+        if (timer) { clearTimeout(timer); timer = null; }
+      } else {
+        resetTimer();
+      }
+    }
+
+    prevBtn.addEventListener("click", prev);
+    nextBtn.addEventListener("click", next);
+    pauseBtn.addEventListener("click", togglePause);
+
+    carousel.addEventListener("mouseenter", () => {
+      hovered = true;
+      if (timer) { clearTimeout(timer); timer = null; }
+    });
+    carousel.addEventListener("mouseleave", () => {
+      hovered = false;
+      if (!paused) resetTimer();
+    });
+
+    // Single-card case: hide controls and dots
+    if (cards.length <= 1) {
+      carousel.querySelector(".carousel-controls").style.display = "none";
+      dotsContainer.style.display = "none";
+    } else if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      // Respect reduced motion: start paused
+      paused = true;
+      pauseBtn.textContent = "Resume";
+      pauseBtn.setAttribute("aria-label", "Resume rotation");
+      pauseBtn.classList.add("paused");
+    } else {
+      resetTimer();
+    }
+  })();
+</script>
+
+<script src="js/particles.js" defer></script>
+</body>
+</html>
