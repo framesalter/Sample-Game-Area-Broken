@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sample Problems | The Forces Be With You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+
+  <div id="blackhole" aria-hidden="true"></div>
+  <canvas id="particles-canvas" aria-hidden="true"></canvas>
+
+  <header class="topbar">
+    <a href="index.html" class="brand">Home</a>
+    <nav>
+      <a href="activity.html">Activity</a>
+      <a href="sample.html">Sample Problems</a>
+      <a href="credits.html">Credits</a>
+      <a href="playground.html">Playground</a>
+    </nav>
+  </header>
+
+  <main class="sample-page">
+
+    <section class="sample-hero reveal">
+      <h1>Worked Example</h1>
+      <p class="muted">A full solution in GRESA format, with a Substitution step and a Scientific Conclusion.</p>
+    </section>
+
+    <section class="problem-card reveal">
+      <div class="problem-visual" aria-hidden="true">
+        <div class="orbit-ring orbit-inner"></div>
+        <div class="orbit-ring orbit-outer"></div>
+        <div class="orbit-earth"></div>
+        <div class="orbit-sat orbit-sat-1"></div>
+        <div class="orbit-sat orbit-sat-2"></div>
+      </div>
+
+      <p class="problem-text">
+        A communications satellite of mass $m = 1000\ \text{kg}$ is in a circular parking orbit at radius
+        $r_1 = 7.0 \times 10^6\ \text{m}$ from Earth's center. Boss Man wants to move it to a higher
+        circular operational orbit at radius $r_2 = 1.4 \times 10^7\ \text{m}$.
+      </p>
+
+      <div class="problem-givens">
+        <div class="given-chip">
+          <span class="given-label">Mass</span>
+          <span class="given-value">$1000\ \text{kg}$</span>
+        </div>
+        <div class="given-chip">
+          <span class="given-label">Parking radius</span>
+          <span class="given-value">$7.0 \times 10^6\ \text{m}$</span>
+        </div>
+        <div class="given-chip">
+          <span class="given-label">Operational radius</span>
+          <span class="given-value">$1.4 \times 10^7\ \text{m}$</span>
+        </div>
+        <div class="given-chip">
+          <span class="given-label">Gravitational constant</span>
+          <span class="given-value">$6.67 \times 10^{-11}$</span>
+        </div>
+        <div class="given-chip">
+          <span class="given-label">Earth mass</span>
+          <span class="given-value">$5.97 \times 10^{24}\ \text{kg}$</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Part (a) -->
+    <section class="solution-section reveal">
+      <div class="part-header">
+        <span class="part-badge">a</span>
+        <span class="part-question">
+          Calculate the total mechanical energy $U_1$ of the satellite in the parking orbit and the total
+          mechanical energy $U_2$ in the operational orbit.
+        </span>
+      </div>
+
+      <div class="gresa">
+        <div class="gresa-row" data-step="Given">
+          <span class="gresa-label">Given</span>
+          <div class="gresa-value">
+            <p>$m = 1000\ \text{kg}$, $r_1 = 7.0 \times 10^6\ \text{m}$, $r_2 = 1.4 \times 10^7\ \text{m}$</p>
+            <p>$G = 6.67 \times 10^{-11}\ \text{N}\cdot\text{m}^2/\text{kg}^2$, $M_E = 5.97 \times 10^{24}\ \text{kg}$</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Required">
+          <span class="gresa-label">Required</span>
+          <div class="gresa-value">
+            <p>$U_1$ and $U_2$</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Equation">
+          <span class="gresa-label">Equation</span>
+          <div class="gresa-value">
+            <p>For a circular orbit, the total mechanical energy is</p>
+            <p>$$U = -\frac{G M_E m}{2r}$$</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Substitution">
+          <span class="gresa-label">Substitution</span>
+          <div class="gresa-value">
+            <p>$$U_1 = -\frac{(6.67 \times 10^{-11})(5.97 \times 10^{24})(1000)}{2(7.0 \times 10^6)}$$</p>
+            <p>$$U_2 = -\frac{(6.67 \times 10^{-11})(5.97 \times 10^{24})(1000)}{2(1.4 \times 10^7)}$$</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Solution">
+          <span class="gresa-label">Solution</span>
+          <div class="gresa-value">
+            <p>$$G M_E m \approx 3.98 \times 10^{17}\ \text{J}\cdot\text{m}$$</p>
+            <p>$$U_1 = -\frac{3.98 \times 10^{17}}{1.4 \times 10^7} \approx -2.84 \times 10^{10}\ \text{J}$$</p>
+            <p>$$U_2 = -\frac{3.98 \times 10^{17}}{2.8 \times 10^7} \approx -1.42 \times 10^{10}\ \text{J}$$</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Answer">
+          <span class="gresa-label">Answer</span>
+          <div class="gresa-value">
+            <p>$U_1 \approx -2.84 \times 10^{10}\ \text{J}$ and $U_2 \approx -1.42 \times 10^{10}\ \text{J}$.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Part (b) -->
+    <section class="solution-section reveal">
+      <div class="part-header">
+        <span class="part-badge">b</span>
+        <span class="part-question">
+          Find the change in total energy $\Delta U = U_2 - U_1$. Is energy added to or removed from the
+          satellite during the orbit change?
+        </span>
+      </div>
+
+      <div class="gresa">
+        <div class="gresa-row" data-step="Given">
+          <span class="gresa-label">Given</span>
+          <div class="gresa-value">
+            <p>$U_1 \approx -2.84 \times 10^{10}\ \text{J}$ and $U_2 \approx -1.42 \times 10^{10}\ \text{J}$ from part (a)</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Required">
+          <span class="gresa-label">Required</span>
+          <div class="gresa-value">
+            <p>$\Delta U$ and whether energy is added or removed</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Equation">
+          <span class="gresa-label">Equation</span>
+          <div class="gresa-value">
+            <p>$$\Delta U = U_2 - U_1$$</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Substitution">
+          <span class="gresa-label">Substitution</span>
+          <div class="gresa-value">
+            <p>$$\Delta U = (-1.42 \times 10^{10}) - (-2.84 \times 10^{10})$$</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Solution">
+          <span class="gresa-label">Solution</span>
+          <div class="gresa-value">
+            <p>$$\Delta U = -1.42 \times 10^{10} + 2.84 \times 10^{10} = +1.42 \times 10^{10}\ \text{J}$$</p>
+            <p>Because $\Delta U$ is positive, energy is <strong>added</strong> to the satellite.</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Answer">
+          <span class="gresa-label">Answer</span>
+          <div class="gresa-value">
+            <p>$\Delta U \approx +1.42 \times 10^{10}\ \text{J}$. Energy is added to the satellite.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Part (c) -->
+    <section class="solution-section reveal">
+      <div class="part-header">
+        <span class="part-badge">c</span>
+        <span class="part-question">
+          As the satellite moves from $r_1$ to $r_2$, explain what happens to its kinetic energy and its
+          gravitational potential energy.
+        </span>
+      </div>
+
+      <div class="gresa">
+        <div class="gresa-row" data-step="Given">
+          <span class="gresa-label">Given</span>
+          <div class="gresa-value">
+            <p>The satellite moves from $r_1 = 7.0 \times 10^6\ \text{m}$ to a larger radius $r_2 = 1.4 \times 10^7\ \text{m}$.</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Required">
+          <span class="gresa-label">Required</span>
+          <div class="gresa-value">
+            <p>The direction of change of kinetic energy ($KE$) and gravitational potential energy ($PE$).</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Equation">
+          <span class="gresa-label">Equation</span>
+          <div class="gresa-value">
+            <p>$$KE = \frac{G M_E m}{2r}, \qquad PE = -\frac{G M_E m}{r}$$</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Substitution">
+          <span class="gresa-label">Substitution</span>
+          <div class="gresa-value">
+            <p>At $r_1$: $KE_1 \approx 2.84 \times 10^{10}\ \text{J}$, $PE_1 \approx -5.69 \times 10^{10}\ \text{J}$</p>
+            <p>At $r_2$: $KE_2 \approx 1.42 \times 10^{10}\ \text{J}$, $PE_2 \approx -2.84 \times 10^{10}\ \text{J}$</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Solution">
+          <span class="gresa-label">Solution</span>
+          <div class="gresa-value">
+            <p>Because $r$ appears in the denominator, larger $r$ means smaller $1/r$. So $KE$ decreases from $2.84 \times 10^{10}\ \text{J}$ to $1.42 \times 10^{10}\ \text{J}$.</p>
+            <p>$PE$ is negative, and its magnitude decreases as $r$ increases. So $PE$ becomes less negative, from $-5.69 \times 10^{10}\ \text{J}$ to $-2.84 \times 10^{10}\ \text{J}$. In other words, $PE$ increases.</p>
+          </div>
+        </div>
+        <div class="gresa-row" data-step="Answer">
+          <span class="gresa-label">Answer</span>
+          <div class="gresa-value">
+            <p>Kinetic energy <strong>decreases</strong>. Gravitational potential energy <strong>increases</strong> (becomes less negative).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scientific Conclusion -->
+    <section class="conclusion-card reveal">
+      <h2>Scientific Conclusion</h2>
+      <p>
+        Moving a satellite from a lower circular orbit to a higher one requires energy to be added to the
+        system. In this example, the total mechanical energy increases from approximately
+        $-2.84 \times 10^{10}\ \text{J}$ to $-1.42 \times 10^{10}\ \text{J}$, a net gain of about
+        $1.42 \times 10^{10}\ \text{J}$. This energy is supplied by the rocket engine's burns.
+      </p>
+      <p>
+        Physically, the satellite slows down in the higher orbit, so its kinetic energy decreases.
+        However, its gravitational potential energy becomes less negative because it is farther from
+        Earth. The increase in potential energy is larger than the decrease in kinetic energy, which is
+        why the total mechanical energy rises. This is a direct consequence of the total mechanical
+        energy of a bound orbit being negative: as the radius grows, $U$ approaches zero from below, so
+        $U$ increases even though the satellite itself slows down.
+      </p>
+    </section>
+
+    <div class="actions sample-actions reveal">
+      <a href="activity.html" class="primary">Try It Yourself</a>
+      <a href="index.html" class="ghost">Back to Home</a>
+    </div>
+
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$",  right: "$",  display: false }
+          ],
+          throwOnError: false
+        });
+      }
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("visible");
+            obs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.08 });
+      document.querySelectorAll(".reveal").forEach((el) => obs.observe(el));
+    });
+  </script>
+
+  <script src="js/particles.js" defer></script>
+
+</body>
+</html>
