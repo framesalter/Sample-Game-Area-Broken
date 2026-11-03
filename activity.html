@@ -3,7 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Activity · Satellite Energy</title>
+  <title>Activity | The Forces Be With You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -11,30 +14,55 @@
   <script defer src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
 </head>
 <body>
+
+  <div id="blackhole" aria-hidden="true"></div>
+  <canvas id="particles-canvas" aria-hidden="true"></canvas>
+
   <header class="topbar">
-    <a href="index.html" class="brand">Satellite Energy</a>
+    <a href="index.html" class="brand">Home</a>
     <nav>
+      <a href="activity.html">Activity</a>
       <a href="sample.html">Sample Problems</a>
       <a href="credits.html">Credits</a>
+      <a href="playground.html">Playground</a>
     </nav>
   </header>
 
   <main id="app">
-    <!-- Setup -->
-    <section id="setup" class="panel">
-      <h1>Set up your mission</h1>
-      <p class="muted">Choose how the givens for your session should be picked.</p>
+    <section id="setup" class="panel activity-setup">
+      <div class="setup-hero">
+        <h1>Set up your mission</h1>
+        <p class="muted">Givens and card order are rerolled each session so nothing can be memorized.</p>
+      </div>
 
-      <fieldset>
-        <legend>Personalization</legend>
-        <label><input type="radio" name="mode" value="preset" checked> Preset</label>
-        <label><input type="radio" name="mode" value="custom"> Custom</label>
-        <label><input type="radio" name="mode" value="auto"> Auto randomize</label>
-      </fieldset>
-
-      <div id="preset-panel" class="subpanel">
-        <label for="preset-select">Preset</label>
-        <select id="preset-select"></select>
+      <div class="mode-picker">
+        <span class="mode-legend">Mode</span>
+        <div class="mode-grid">
+          <label class="mode-card">
+            <input type="radio" name="mode" value="default" checked>
+            <div class="mode-content">
+              <div class="mode-icon">✧</div>
+              <div class="mode-title">Default</div>
+              <div class="mode-desc">The Default mode</div>
+            </div>
+          </label>
+          <label class="mode-card">
+            <input type="radio" name="mode" value="custom">
+            <div class="mode-content">
+              <div class="mode-icon">⚙</div>
+              <div class="mode-title">Custom</div>
+              <div class="mode-desc">Set your own mass and radii</div>
+            </div>
+          </label>
+          <label class="mode-card">
+            <input type="radio" name="mode" value="auto">
+            <div class="mode-content">
+              <div class="mode-icon">⤨</div>
+              <div class="mode-title">Auto Randomizer</div>
+              <div class="mode-desc">Wide ranges, fully randomized</div>
+            </div>
+          </label>
+        </div>
       </div>
 
       <div id="custom-panel" class="subpanel hidden">
@@ -45,65 +73,63 @@
         </div>
       </div>
 
-      <div id="auto-panel" class="subpanel hidden">
-        <p class="muted">Givens will be randomized within bounds at the start of each session.</p>
-        <button id="auto-reroll" type="button">Preview a random set</button>
-        <p id="auto-preview" class="preview"></p>
+      <div class="available-card">
+        <h3>Available questions</h3>
+        <div id="available-breakdown"></div>
       </div>
 
-      <div class="preview-card">
-        <h3>Session preview</h3>
-        <p id="preview-givens"></p>
-        <p id="preview-check" class="muted"></p>
+      <div class="info-block">
+        <h3>Input format</h3>
+        <p>Final answers must be in <strong>two significant figures</strong>. Large or small numbers may be typed as a raw value or in scientific notation.</p>
+        <p>Accepted forms: <code>2.5e10</code>, <code>2.5 x 10^10</code>, <code>2.5 * 10^10</code>, <code>2.5×10^10</code>, or the raw value <code>25000000000</code>.</p>
+        <p>Negative answers are accepted where the expected value is negative, for example <code>-2.5e10</code>.</p>
+        <p>Each field is graded strictly against the correct two-significant-figure value.</p>
       </div>
 
-      <label for="session-count">Number of questions</label>
-      <select id="session-count">
-        <option value="5">5</option>
-        <option value="10" selected>10</option>
-        <option value="15">15</option>
-      </select>
+      <p id="setup-errors" class="error hidden"></p>
 
-      <button id="start-btn" type="button" class="primary">Start session</button>
+      <div class="start-wrap">
+        <button id="start-btn" type="button" class="primary start-btn">Start session</button>
+      </div>
     </section>
 
-    <!-- Quiz -->
-    <section id="quiz" class="panel hidden">
-      <div class="quiz-header">
-        <span id="progress-text">Question 1 of 10</span>
-        <span id="item-tag"></span>
+    <section id="quiz" class="panel activity-quiz hidden">
+      <div class="quiz-hero">
+        <div class="quiz-header">
+          <span id="progress-text"></span>
+          <span id="item-tag" class="item-tag"></span>
+        </div>
+        <div class="progressbar"><div id="progress-fill"></div></div>
       </div>
-      <div class="progressbar"><div id="progress-fill"></div></div>
 
-      <div id="question-body"></div>
+      <div id="question-body" class="question-body"></div>
 
       <div id="hint-box" class="hint hidden"></div>
 
-      <div class="actions">
+      <div class="actions quiz-actions">
         <button id="hint-btn" type="button" class="ghost hidden">Show hint</button>
         <button id="check-btn" type="button" class="primary">Check</button>
         <button id="next-btn" type="button" class="primary hidden">Next</button>
       </div>
 
-      <div id="feedback" class="feedback hidden"></div>
-      <div id="solution-box" class="solution hidden"></div>
+      <p id="card-summary" class="card-summary hidden"></p>
     </section>
 
-    <!-- Results -->
-    <section id="results" class="panel hidden">
-      <h1>Session complete</h1>
-      <p id="score-line"></p>
-      <div id="breakdown"></div>
-      <h2>Review missed questions</h2>
-      <div id="review"></div>
-      <div class="actions">
-        <button id="retake-same" type="button" class="ghost">Retake with same givens</button>
-        <button id="retake-new" type="button" class="primary">Retake with new questions</button>
-        <a href="index.html" class="ghost">Back to home</a>
+    <section id="results" class="panel activity-results hidden">
+      <div class="results-hero">
+        <h1>Session complete</h1>
+        <p id="score-line"></p>
+      </div>
+      <div id="breakdown" class="breakdown"></div>
+      <div class="actions results-actions">
+        <button id="new-session" type="button" class="primary">Start New Session</button>
+        <button id="retake-same" type="button" class="ghost">Retake Same Givens</button>
+        <a href="index.html" class="ghost">Back to Home</a>
       </div>
     </section>
   </main>
 
   <script type="module" src="js/quiz.js"></script>
+  <script src="js/particles.js" defer></script>
 </body>
 </html>
