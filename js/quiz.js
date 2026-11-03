@@ -1,12 +1,12 @@
-import { QUESTION_BANK, PRESETS, BOUNDS, CONSTANTS } from "./questions.js";
+import { QUESTION_BANK, DEFAULT_PRESET, BOUNDS } from "./questions.js";
 import { sci, round2sf, parseNumber, approxEq, shuffle, renderRich } from "./utils.js";
 
 const state = {
   phase: "setup",
-  mode: "preset",
-  givens: { ...PRESETS["standard-leo-meo"].givens },
+  mode: "default",
+  givens: null,
   settings: { hints: false },
-  session: { questions: [], answers: [], current: 0, locked: false },
+  session: { cards: [], answers: [], current: 0, locked: false },
 };
 
 const $ = (id) => document.getElementById(id);
@@ -18,192 +18,223 @@ function loadSettings() {
   } catch (_) {}
 }
 
-function saveSettings() {
-  try { localStorage.setItem("sat.settings", JSON.stringify(state.settings)); } catch (_) {}
-}
-
-// ---------- Setup ----------
-function initSetup() {
-  const sel = $("preset-select");
-  for (const [k, v] of Object.entries(PRESETS)) {
-    const o = document.createElement("option");
-    o.value = k;
-    o.textContent = v.label;
-    sel.appendChild(o);
-  }
-  sel.value = "standard-leo-meo";
-  sel.addEventListener("change", () => {
-    state.givens = { ...PRESETS[sel.value].givens };
-    updatePreview();
-  });
-
-  $("input-m").value = state.givens.m;
-  $("input-r1").value = state.givens.r1;
-  $("input-r2").value = state.givens.r2;
-
-  ["input-m", "input-r1", "input-r2"].forEach((id) => {
-    $(id).addEventListener("input", () => {
-      state.givens = {
-        m: Number($("input-m").value),
-        r1: Number($("input-r1").value),
-        r2: Number($("input-r2").value),
-      };
-      updatePreview();
-    });
-  });
-
-  document.querySelectorAll('input[name="mode"]').forEach((r) => {
-    r.addEventListener("change", () => {
-      state.mode = r.value;
-      $("preset-panel").classList.toggle("hidden", state.mode !== "preset");
-      $("custom-panel").classList.toggle("hidden", state.mode !== "custom");
-      $("auto-panel").classList.toggle("hidden", state.mode !== "auto");
-      if (state.mode === "preset") state.givens = { ...PRESETS[$("preset-select").value].givens };
-      if (state.mode === "custom") {
-        state.givens = {
-          m: Number($("input-m").value),
-          r1: Number($("input-r1").value),
-          r2: Number($("input-r2").value),
-        };
-      }
-      if (state.mode === "auto") state.givens = randomGivens();
-      updatePreview();
-    });
-  });
-
-  $("auto-reroll").addEventListener("click", () => {
-    state.givens = randomGivens();
-    updatePreview();
-    $("auto-preview").textContent = previewText();
-  });
-
-  $("start-btn").addEventListener("click", startSession);
-  updatePreview();
-}
-
-function randomGivens() {
-  const r = (b) => {
-    const v = b.min + Math.random() * (b.max - b.min);
-    return Math.round(v / b.step) * b.step;
+// ---------- Rolling ----------
+function rollFromBounds(b) {
+  const pick = (bound) => {
+    const v = bound.min + Math.random() * (bound.max - bound.min);
+    return Math.round(v / bound.step) * bound.step;
   };
-  let r1 = r(BOUNDS.r1);
-  let r2 = r(BOUNDS.r2);
+  let r1 = pick(b.r1);
+  let r2 = pick(b.r2);
   if (r2 <= r1) r2 = r1 + 5e6;
-  return { m: r(BOUNDS.m), r1, r2 };
+  return { m: pick(b.m), r1, r2 };
+}
+
+function rollCurrentGivens() {
+  if (state.mode === "default") return rollFromBounds(DEFAULT_PRESET.bounds);
+  if (state.mode === "auto")    return rollFromBounds(BOUNDS);
+  return {
+    m: Number($("input-m").value),
+    r1: Number($("input-r1").value),
+    r2: Number($("input-r2").value),
+  };
 }
 
 function validate(g) {
   const errs = [];
-  if (!isFinite(g.m) || g.m <= 0) errs.push("Mass must be positive.");
-  if (!isFinite(g.r1) || g.r1 < 6.5e6) errs.push("r1 must be at least 6.5e6 m.");
+  if (!g) return ["Please set the givens first."];
+  if (!isFinite(g.m) || g.m <= 0) errs.push("Mass must be a positive number.");
+  if (!isFinite(g.r1) || g.r1 < 6.5e6) errs.push("r1 must be at least 6.5 × 10⁶ m.");
   if (!isFinite(g.r2) || g.r2 <= g.r1) errs.push("r2 must be greater than r1.");
   return errs;
 }
 
-function previewText() {
-  return `m = ${state.givens.m} kg, r1 = ${sci(state.givens.r1)} m, r2 = ${sci(state.givens.r2)} m`;
-}
-
-function updatePreview() {
-  $("preview-givens").textContent = previewText();
-  const errs = validate(state.givens);
-  $("preview-check").textContent = errs.length ? errs.join(" ") : "Givens look valid.";
-  $("start-btn").disabled = errs.length > 0;
-}
-
-// ---------- Session draw ----------
-function drawSession(bank, count) {
+// ---------- Setup ----------
+function initSetup() {
   const byItem = {};
-  bank.forEach((q) => {
-    (byItem[q.item] = byItem[q.item] || []).push(q);
+  let totalSubQ = 0;
+  QUESTION_BANK.forEach((card) => {
+    byItem[card.item] = byItem[card.item] || 0;
+    byItem[card.item] += card.subQuestions.length;
+    totalSubQ += card.subQuestions.length;
   });
-  const items = shuffle(Object.keys(byItem));
-  const per = Math.max(1, Math.round(count / items.length));
-  const picked = [];
-  for (const k of items) {
-    const pool = shuffle(byItem[k]);
-    picked.push(...pool.slice(0, Math.min(per, pool.length)));
-  }
-  while (picked.length > count) picked.pop();
-  if (picked.length < count) {
-    const remaining = shuffle(bank.filter((q) => !picked.includes(q)));
-    picked.push(...remaining.slice(0, count - picked.length));
-  }
-  return shuffle(picked);
+  let html = "";
+  Object.entries(byItem).forEach(([item, count]) => {
+    html += `<p>Items ${item}: ${count} question${count === 1 ? "" : "s"}</p>`;
+  });
+  html += `<p><strong>Total: ${totalSubQ} questions across ${QUESTION_BANK.length} cards</strong></p>`;
+  html += `<p class="muted">Cards appear in random order. Sub-questions stay in order within each card.</p>`;
+  $("available-breakdown").innerHTML = html;
+
+  $("input-m").value = 1000;
+  $("input-r1").value = 8.0e6;
+  $("input-r2").value = 1.6e7;
+
+  document.querySelectorAll('input[name="mode"]').forEach((r) => {
+    r.addEventListener("change", () => {
+      state.mode = r.value;
+      $("custom-panel").classList.toggle("hidden", state.mode !== "custom");
+      updateSetupState();
+    });
+  });
+
+  ["input-m", "input-r1", "input-r2"].forEach((id) => {
+    $(id).addEventListener("input", updateSetupState);
+  });
+
+  $("start-btn").addEventListener("click", () => startSession());
+
+  $("custom-panel").classList.add("hidden");
+  updateSetupState();
 }
 
-function startSession() {
-  const errs = validate(state.givens);
-  if (errs.length) return;
-  const count = Number($("session-count").value);
-  state.session.questions = drawSession(QUESTION_BANK, count);
+function updateSetupState() {
+  const errEl = $("setup-errors");
+  if (state.mode === "custom") {
+    const g = {
+      m: Number($("input-m").value),
+      r1: Number($("input-r1").value),
+      r2: Number($("input-r2").value),
+    };
+    const errs = validate(g);
+    if (errs.length) {
+      errEl.textContent = errs.join(" ");
+      errEl.classList.remove("hidden");
+      $("start-btn").disabled = true;
+      return;
+    }
+  }
+  errEl.classList.add("hidden");
+  errEl.textContent = "";
+  $("start-btn").disabled = false;
+}
+
+// ---------- Start ----------
+function startSession(fixedGivens) {
+  const isGivensObject =
+    fixedGivens && typeof fixedGivens === "object" &&
+    "m" in fixedGivens && "r1" in fixedGivens && "r2" in fixedGivens;
+  const g = isGivensObject ? fixedGivens : rollCurrentGivens();
+  const errs = validate(g);
+  if (errs.length) {
+    const errEl = $("setup-errors");
+    errEl.textContent = errs.join(" ");
+    errEl.classList.remove("hidden");
+    return;
+  }
+  state.givens = g;
+  state.session.cards = shuffle(QUESTION_BANK.slice());
   state.session.answers = [];
   state.session.current = 0;
+  state.session.locked = false;
   state.phase = "quiz";
   showPanel("quiz");
-  renderQuestion();
+  renderCard();
 }
 
-// ---------- Rendering ----------
 function showPanel(id) {
-  ["setup", "quiz", "results"].forEach((p) => $(p).classList.toggle("hidden", p !== id));
+  ["setup", "quiz", "results"].forEach((p) => {
+    $(p).classList.toggle("hidden", p !== id);
+  });
 }
 
-function renderQuestion() {
-  const q = state.session.questions[state.session.current];
+// ---------- Render one card ----------
+function renderCard() {
+  const card = state.session.cards[state.session.current];
   const g = state.givens;
   state.session.locked = false;
 
-  $("progress-text").textContent = `Question ${state.session.current + 1} of ${state.session.questions.length}`;
-  $("item-tag").textContent = `Items ${q.item}`;
-  $("progress-fill").style.width = `${((state.session.current) / state.session.questions.length) * 100}%`;
+  $("progress-text").textContent = `Card ${state.session.current + 1} of ${state.session.cards.length}`;
+  $("item-tag").textContent = `Items ${card.item}`;
+  $("progress-fill").style.width =
+    `${(state.session.current / state.session.cards.length) * 100}%`;
 
   const body = $("question-body");
   body.innerHTML = "";
-  const promptEl = document.createElement("div");
-  promptEl.className = "prompt";
-  renderRich(promptEl, q.prompt(g));
-  body.appendChild(promptEl);
 
-  if (q.format === "numeric") {
-    const row = document.createElement("div");
-    row.className = "answer-row";
-    row.innerHTML = `<input id="answer-input" type="text" placeholder="e.g. -2.5e10 or -2.5 x 10^10" autocomplete="off"> <span class="unit">J or m</span>`;
-    body.appendChild(row);
-  } else if (q.format === "essay") {
-    const ta = document.createElement("textarea");
-    ta.id = "answer-input";
-    ta.rows = 4;
-    ta.placeholder = "Write your answer in one or two sentences.";
-    body.appendChild(ta);
-  } else if (q.format === "comparison") {
-    const list = document.createElement("div");
-    list.className = "options";
-    q.options.forEach((opt, i) => {
+  const title = document.createElement("h2");
+  title.textContent = card.title;
+  body.appendChild(title);
+
+  card.subQuestions.forEach((sq) => {
+    const sqEl = document.createElement("div");
+    sqEl.className = "subquestion";
+
+    if (sq.label) {
+      const labelEl = document.createElement("div");
+      labelEl.className = "subq-label";
+      labelEl.textContent = sq.label;
+      sqEl.appendChild(labelEl);
+    }
+
+    const promptEl = document.createElement("div");
+    promptEl.className = "subq-prompt";
+    renderRich(promptEl, sq.prompt(g));
+    sqEl.appendChild(promptEl);
+
+    const fieldsEl = document.createElement("div");
+    fieldsEl.className = "subq-fields";
+
+    sq.fields.forEach((f) => {
+      const row = document.createElement("div");
+      row.className = "field-row";
+
       const label = document.createElement("label");
-      label.className = "option";
-      const input = document.createElement("input");
-      input.type = "radio";
-      input.name = "choice";
-      input.value = String(i);
-      label.appendChild(input);
-      const span = document.createElement("span");
-      renderRich(span, opt);
-      label.appendChild(span);
-      list.appendChild(label);
-    });
-    body.appendChild(list);
-  }
+      label.setAttribute("for", `field-${sq.id}-${f.id}`);
+      label.textContent = f.label;
+      row.appendChild(label);
 
-  $("feedback").classList.add("hidden");
-  $("feedback").textContent = "";
-  $("solution-box").classList.add("hidden");
-  $("solution-box").innerHTML = "";
+      let inputEl;
+      if (f.kind === "numeric") {
+        inputEl = document.createElement("input");
+        inputEl.type = "text";
+        inputEl.id = `field-${sq.id}-${f.id}`;
+        inputEl.placeholder = f.placeholder || "e.g. 1.0e10";
+        inputEl.autocomplete = "off";
+        inputEl.inputMode = "text";
+      } else if (f.kind === "dropdown") {
+        inputEl = document.createElement("select");
+        inputEl.id = `field-${sq.id}-${f.id}`;
+        const blank = document.createElement("option");
+        blank.value = "";
+        blank.textContent = "Select an answer";
+        blank.disabled = true;
+        blank.selected = true;
+        inputEl.appendChild(blank);
+        f.options.forEach((opt) => {
+          const o = document.createElement("option");
+          o.value = opt.value;
+          o.textContent = opt.text;
+          inputEl.appendChild(o);
+        });
+      }
+      row.appendChild(inputEl);
+
+      const mark = document.createElement("span");
+      mark.id = `mark-${sq.id}-${f.id}`;
+      mark.className = "field-mark";
+      row.appendChild(mark);
+
+      fieldsEl.appendChild(row);
+    });
+
+    sqEl.appendChild(fieldsEl);
+
+    const solEl = document.createElement("div");
+    solEl.id = `solution-${sq.id}`;
+    solEl.className = "subq-solution hidden";
+    sqEl.appendChild(solEl);
+
+    body.appendChild(sqEl);
+  });
+
+  $("card-summary").classList.add("hidden");
+  $("card-summary").textContent = "";
   $("check-btn").classList.remove("hidden");
   $("check-btn").disabled = false;
   $("next-btn").classList.add("hidden");
 
-  if (state.settings.hints && q.hints && q.hints.length) {
+  if (state.settings.hints && card.hints && card.hints.length) {
     $("hint-btn").classList.remove("hidden");
     $("hint-btn").disabled = false;
     $("hint-btn").dataset.revealed = "0";
@@ -211,108 +242,129 @@ function renderQuestion() {
     $("hint-box").innerHTML = "";
   } else {
     $("hint-btn").classList.add("hidden");
+    $("hint-box").classList.add("hidden");
   }
 }
 
-// ---------- Checking ----------
-function checkAnswer() {
+// ---------- Check one card ----------
+function checkCard() {
   if (state.session.locked) return;
-  const q = state.session.questions[state.session.current];
+  const card = state.session.cards[state.session.current];
   const g = state.givens;
 
-  let correct = false;
-  let userRecord = { qid: q.id, item: q.item, userAnswer: null, correct: false };
+  const results = {};
+  card.subQuestions.forEach((sq) => {
+    results[sq.id] = {};
+    sq.fields.forEach((f) => {
+      const el = $(`field-${sq.id}-${f.id}`);
+      let correct = false;
+      if (f.kind === "numeric") {
+        const parsed = parseNumber(el.value);
+        if (!isNaN(parsed)) {
+          correct = approxEq(round2sf(parsed), round2sf(f.expected(g)));
+        }
+      } else if (f.kind === "dropdown") {
+        correct = el.value === f.correct;
+      }
+      results[sq.id][f.id] = correct;
+    });
+  });
 
-  if (q.format === "numeric") {
-    const raw = $("answer-input").value;
-    const parsed = parseNumber(raw);
-    if (isNaN(parsed)) {
-      showFeedback("invalid", "Could not read your answer. Use a number like -2.5e10 or -2.5 x 10^10.");
-      return;
+  let bForcedWrong = false;
+  if (card.id === "card-9") {
+    const aAllCorrect = Object.values(results.a || {}).every((v) => v === true);
+    if (!aAllCorrect) {
+      Object.keys(results.b || {}).forEach((k) => { results.b[k] = false; });
+      bForcedWrong = true;
     }
-    const expected = q.expected(g);
-    correct = approxEq(round2sf(parsed), round2sf(expected));
-    userRecord.userAnswer = parsed;
-    userRecord.correct = correct;
-  } else if (q.format === "comparison") {
-    const sel = document.querySelector('input[name="choice"]:checked');
-    if (!sel) {
-      showFeedback("invalid", "Pick one option before checking.");
-      return;
-    }
-    const idx = Number(sel.value);
-    correct = idx === q.correctIndex;
-    userRecord.userAnswer = idx;
-    userRecord.correct = correct;
-  } else if (q.format === "essay") {
-    // Essay: reveal model answer and let user self assess.
-    const model = q.modelAnswer;
-    const fb = $("feedback");
-    fb.classList.remove("hidden");
-    fb.className = "feedback info";
-    fb.innerHTML = `<strong>Model answer:</strong> ${model}`;
-    const selfAssess = document.createElement("div");
-    selfAssess.className = "self-assess";
-    selfAssess.innerHTML = `
-      <p>Did your answer match the model?</p>
-      <button type="button" id="self-yes" class="primary">Yes, I got it</button>
-      <button type="button" id="self-no" class="ghost">I need more practice</button>
-    `;
-    fb.appendChild(selfAssess);
-    $("self-yes").addEventListener("click", () => {
-      userRecord.userAnswer = "self-yes";
-      userRecord.correct = true;
-      finishQuestion(q, userRecord, true);
-    });
-    $("self-no").addEventListener("click", () => {
-      userRecord.userAnswer = "self-no";
-      userRecord.correct = false;
-      finishQuestion(q, userRecord, false);
-    });
-    $("check-btn").disabled = true;
-    return;
   }
 
-  userRecord.correct = correct;
-  finishQuestion(q, userRecord, correct);
-}
+  let totalFields = 0;
+  let correctFields = 0;
 
-function finishQuestion(q, record, correct) {
+  card.subQuestions.forEach((sq) => {
+    sq.fields.forEach((f) => {
+      const el = $(`field-${sq.id}-${f.id}`);
+      const mark = $(`mark-${sq.id}-${f.id}`);
+      totalFields += 1;
+      if (results[sq.id][f.id]) {
+        correctFields += 1;
+        el.classList.add("field-correct");
+        el.classList.remove("field-wrong");
+        mark.textContent = "Correct";
+        mark.className = "field-mark ok";
+      } else {
+        el.classList.add("field-wrong");
+        el.classList.remove("field-correct");
+        mark.textContent = "Wrong";
+        mark.className = "field-mark bad";
+      }
+      el.disabled = true;
+    });
+  });
+
+  card.subQuestions.forEach((sq) => {
+    const solEl = $(`solution-${sq.id}`);
+    solEl.classList.remove("hidden");
+    const sol = sq.solution(g);
+
+    let noteHtml = "";
+    if (bForcedWrong && sq.id === "b" && card.id === "card-9") {
+      noteHtml = `<p class="dep-note">Because at least one field in (a) is not correct, every field in (b) is marked wrong.</p>`;
+    }
+
+    solEl.innerHTML = `
+      ${noteHtml}
+      <h4>Solution${sq.label ? " " + sq.label : ""}</h4>
+      <p><strong>Given:</strong> ${sol.given}</p>
+      <p><strong>Required:</strong> ${sol.required}</p>
+      <p><strong>Equation:</strong> ${sol.equation}</p>
+      <p><strong>Substitution:</strong> ${sol.substitution}</p>
+      <p><strong>Solution:</strong> ${sol.solution}</p>
+      <p><strong>Answer:</strong> ${sol.answer}</p>
+    `;
+
+    if (window.renderMathInElement) {
+      try {
+        window.renderMathInElement(solEl, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+          ],
+          throwOnError: false,
+        });
+      } catch (e) {
+        console.error("KaTeX render error:", e);
+      }
+    } else {
+      console.warn("renderMathInElement is not available");
+    }
+  });
+
+  const summary = $("card-summary");
+  summary.textContent = `You got ${correctFields} of ${totalFields} fields correct in this card.`;
+  summary.classList.remove("hidden");
+
+  state.session.answers.push({
+    cardId: card.id,
+    item: card.item,
+    totalFields,
+    correctFields,
+    fullyCorrect: correctFields === totalFields,
+  });
+
   state.session.locked = true;
-  state.session.answers.push(record);
   $("check-btn").disabled = true;
+  $("check-btn").classList.add("hidden");
   $("next-btn").classList.remove("hidden");
-  if (correct) showFeedback("correct", "Correct.");
-  else showFeedback("incorrect", "Not quite. Review the solution below.");
-
-  const sol = q.solution(state.givens);
-  const box = $("solution-box");
-  box.classList.remove("hidden");
-  box.innerHTML = `
-    <h3>Solution</h3>
-    <p><strong>Given:</strong> ${sol.given}</p>
-    <p><strong>Required:</strong> ${sol.required}</p>
-    <p><strong>Equation:</strong> ${sol.equation}</p>
-    <p><strong>Substitution:</strong> ${sol.substitution}</p>
-    <p><strong>Solution:</strong> ${sol.solution}</p>
-    <p><strong>Answer:</strong> ${sol.answer}</p>
-  `;
-  renderRich(box, box.innerHTML);
 }
 
-function showFeedback(kind, msg) {
-  const fb = $("feedback");
-  fb.classList.remove("hidden");
-  fb.className = `feedback ${kind}`;
-  fb.textContent = msg;
-}
-
-function nextQuestion() {
+function nextCard() {
   state.session.current += 1;
-  if (state.session.current >= state.session.questions.length) {
+  if (state.session.current >= state.session.cards.length) {
     endSession();
   } else {
-    renderQuestion();
+    renderCard();
   }
 }
 
@@ -320,79 +372,75 @@ function nextQuestion() {
 function endSession() {
   state.phase = "results";
   showPanel("results");
-  const total = state.session.questions.length;
-  const correctCount = state.session.answers.filter((a) => a.correct).length;
-  $("score-line").textContent = `You answered ${correctCount} of ${total} correctly.`;
 
-  const byItem = {};
-  state.session.answers.forEach((a) => {
-    byItem[a.item] = byItem[a.item] || { correct: 0, total: 0 };
-    byItem[a.item].total += 1;
-    if (a.correct) byItem[a.item].correct += 1;
-  });
+  const totalFields = state.session.answers.reduce((s, a) => s + a.totalFields, 0);
+  const correctFields = state.session.answers.reduce((s, a) => s + a.correctFields, 0);
+  const totalCards = state.session.answers.length;
+  const perfectCards = state.session.answers.filter((a) => a.fullyCorrect).length;
+
+  $("score-line").textContent =
+    `You correctly answered ${correctFields} of ${totalFields} fields across ${totalCards} cards. ${perfectCards} of ${totalCards} cards were fully correct.`;
+
   const bd = $("breakdown");
   bd.innerHTML = "";
-  Object.entries(byItem).forEach(([k, v]) => {
+  state.session.answers.forEach((a) => {
     const p = document.createElement("p");
-    p.textContent = `Items ${k}: ${v.correct} of ${v.total}`;
+    p.textContent = `Items ${a.item}: ${a.correctFields} of ${a.totalFields} fields correct`;
     bd.appendChild(p);
-  });
-
-  const review = $("review");
-  review.innerHTML = "";
-  state.session.answers.forEach((a, i) => {
-    if (a.correct) return;
-    const q = state.session.questions.find((x) => x.id === a.qid);
-    const div = document.createElement("div");
-    div.className = "review-card";
-    const p = document.createElement("div");
-    renderRich(p, q.prompt(state.givens));
-    div.appendChild(p);
-    const sol = document.createElement("div");
-    const s = q.solution(state.givens);
-    sol.innerHTML = `<p><strong>Answer:</strong> ${s.answer}</p>`;
-    renderRich(sol, sol.innerHTML);
-    div.appendChild(sol);
-    review.appendChild(div);
   });
 }
 
-// ---------- Wire up ----------
+// ---------- Wire ----------
 function wire() {
-  $("check-btn").addEventListener("click", checkAnswer);
-  $("next-btn").addEventListener("click", nextQuestion);
+  $("check-btn").addEventListener("click", checkCard);
+  $("next-btn").addEventListener("click", nextCard);
+
   $("hint-btn").addEventListener("click", () => {
-    const q = state.session.questions[state.session.current];
+    const card = state.session.cards[state.session.current];
+    if (!card || !card.hints) return;
     const revealed = Number($("hint-btn").dataset.revealed || 0);
     const box = $("hint-box");
-    if (revealed >= q.hints.length) {
+    if (revealed >= card.hints.length) {
       $("hint-btn").disabled = true;
       return;
     }
     box.classList.remove("hidden");
-    const div = document.createElement("p");
-    div.textContent = `Hint ${revealed + 1}: ${q.hints[revealed]}`;
-    box.appendChild(div);
+    const p = document.createElement("p");
+    p.textContent = `Hint ${revealed + 1}: ${card.hints[revealed]}`;
+    box.appendChild(p);
     $("hint-btn").dataset.revealed = String(revealed + 1);
   });
+
+  $("new-session").addEventListener("click", () => startSession());
   $("retake-same").addEventListener("click", () => {
-    state.session.questions = drawSession(QUESTION_BANK, state.session.questions.length);
+    const fixed = { ...state.givens };
+    state.session.cards = shuffle(QUESTION_BANK.slice());
     state.session.answers = [];
     state.session.current = 0;
+    state.session.locked = false;
+    state.phase = "quiz";
     showPanel("quiz");
-    renderQuestion();
-  });
-  $("retake-new").addEventListener("click", () => {
-    if (state.mode === "auto") state.givens = randomGivens();
-    state.session.questions = drawSession(QUESTION_BANK, state.session.questions.length);
-    state.session.answers = [];
-    state.session.current = 0;
-    showPanel("quiz");
-    renderQuestion();
+    renderCard();
   });
 }
 
-// ---------- Boot ----------
+// ---------- Boot with diagnostics ----------
 loadSettings();
 initSetup();
-wire();
+
+try {
+  wire();
+  console.log("wire ok");
+} catch (e) {
+  console.error("wire failed:", e);
+}
+
+const required = ["setup", "quiz", "results", "start-btn", "available-breakdown",
+  "question-body", "check-btn", "next-btn", "card-summary"];
+const missing = required.filter((id) => !document.getElementById(id));
+if (missing.length) console.error("Missing elements:", missing);
+
+["startSession", "renderCard", "checkCard", "nextCard", "endSession", "wire"].forEach((name) => {
+  if (typeof window[name] === "function") return;
+  // Module-scoped functions are not on window; check via eval to avoid ReferenceError
+});
