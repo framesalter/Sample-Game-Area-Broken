@@ -1,5 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Forces Be With You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="blackhole" aria-hidden="true"></div>
+<canvas id="particles-canvas" aria-hidden="true"></canvas>
+
 <header class="topbar">
-  <a href="index.html" class="brand">Satellite Energy</a>
+  <a href="index.html" class="brand">Home</a>
   <nav>
     <a href="activity.html">Activity</a>
     <a href="sample.html">Sample Problems</a>
@@ -9,22 +25,56 @@
 </header>
 
 <main>
-  <h1>Satellite Energy Interactive Activity</h1>
-  <table class="options">
-    <thead><tr><th>Option</th><th>Description</th></tr></thead>
-    <tbody>
-      <tr><td><a href="activity.html">Start activity</a></td><td>Personalize givens, then answer 10 randomized questions.</td></tr>
-      <tr><td><a href="sample.html">Sample problems</a></td><td>Worked examples for Items 7 through 10.</td></tr>
-      <tr><td><a href="credits.html">Credits</a></td><td>Authors, sources, license.</td></tr>
-    </tbody>
-  </table>
+  <section class="hero">
+    <h1>A Physics Worksheet</h1>
+    <p class="muted">Interesting Stuff</p>
+  </section>
+
+  <div class="quick-stats">
+    <div class="quick-stat">
+      <span class="quick-stat-value" id="stat-items">—</span>
+      <span class="quick-stat-label">Items</span>
+    </div>
+    <div class="quick-stat">
+      <span class="quick-stat-value" id="stat-cards">—</span>
+      <span class="quick-stat-label">Cards</span>
+    </div>
+    <div class="quick-stat">
+      <span class="quick-stat-value" id="stat-questions">—</span>
+      <span class="quick-stat-label">Questions</span>
+    </div>
+  </div>
+
+  <h2 class="section-header">Choose a destination</h2>
+
+  <div class="option-grid">
+    <a href="activity.html" class="game-card">
+      <div class="game-card-icon" aria-hidden="true">&Sigma;</div>
+      <h2>Start Activity</h2>
+      <p class="muted">A personalized quiz across four items. You control the givens, the cards reshuffle each session.</p>
+      <span class="game-card-cta">Begin</span>
+    </a>
+    <a href="sample.html" class="game-card">
+      <div class="game-card-icon" aria-hidden="true">&infin;</div>
+      <h2>Sample Problems</h2>
+      <p class="muted">Two worked examples answered through the GRESA method.</p>
+      <span class="game-card-cta">Read</span>
+    </a>
+    <a href="credits.html" class="game-card">
+      <div class="game-card-icon" aria-hidden="true">&int;</div>
+      <h2>Credits</h2>
+      <p class="muted">Not really anything special here.</p>
+      <span class="game-card-cta">View</span>
+    </a>
+  </div>
 </main>
 
 <dialog id="settings-dialog">
   <form method="dialog">
     <h2>Settings</h2>
     <label><input type="checkbox" id="opt-hints"> Show hint button during quiz</label>
-    <p class="muted">Hints are off by default.</p>
+    <label><input type="checkbox" id="opt-particles"> Show background particles</label>
+    <p class="muted">Hints are off by default. Particles are on by default and can be turned off on lower-end devices.</p>
     <button id="settings-save" class="primary" type="button">Save</button>
     <button class="ghost" type="button" onclick="document.getElementById('settings-dialog').close()">Cancel</button>
   </form>
@@ -33,16 +83,46 @@
 <script>
   const dlg = document.getElementById("settings-dialog");
   const hints = document.getElementById("opt-hints");
+  const parts = document.getElementById("opt-particles");
+
   document.getElementById("settings-btn").addEventListener("click", () => {
     try {
       const s = JSON.parse(localStorage.getItem("sat.settings") || "{}");
-      hints.checked = !!s.hints;
-    } catch (_) { hints.checked = false; }
+      hints.checked = s.hints === true;
+      parts.checked = s.particles !== false;
+    } catch (_) {
+      hints.checked = false;
+      parts.checked = true;
+    }
     dlg.showModal();
   });
+
   document.getElementById("settings-save").addEventListener("click", () => {
-    const s = { hints: hints.checked };
+    const s = { hints: hints.checked, particles: parts.checked };
     localStorage.setItem("sat.settings", JSON.stringify(s));
+    if (window.__particles) window.__particles.apply();
     dlg.close();
   });
 </script>
+
+<script type="module">
+  try {
+    const { QUESTION_BANK } = await import("./js/questions.js");
+    const items = new Set();
+    let total = 0;
+    QUESTION_BANK.forEach((c) => {
+      items.add(c.item);
+      total += c.subQuestions.length;
+    });
+    document.getElementById("stat-items").textContent = items.size;
+    document.getElementById("stat-cards").textContent = QUESTION_BANK.length;
+    document.getElementById("stat-questions").textContent = total;
+  } catch (e) {
+    console.warn("Could not load question stats:", e);
+  }
+</script>
+
+<script src="js/particles.js" defer></script>
+
+</body>
+</html>
