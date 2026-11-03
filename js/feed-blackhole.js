@@ -36,9 +36,17 @@ function animateFeed(art, fromX, fromY, rejected) {
   const el = document.createElement("pre");
   el.className = "feeding-art";
   el.textContent = art;
-  el.style.left = fromX + "px";
-  el.style.top = fromY + "px";
+  el.style.left = "0px";
+  el.style.top = "0px";
+  el.style.visibility = "hidden";
   document.body.appendChild(el);
+
+  const preRect = el.getBoundingClientRect();
+  const originX = fromX - preRect.width / 2;
+  const originY = fromY - preRect.height / 2;
+  el.style.left = originX + "px";
+  el.style.top = originY + "px";
+  el.style.visibility = "visible";
 
   const centerX = window.innerWidth / 2;
   const centerY = window.innerHeight / 2;
