@@ -31,6 +31,7 @@ function tierClass(tier) { return "tier-" + tier; }
 function makeReelItem(star) {
   const el = document.createElement("div");
   el.className = "reel-item " + tierClass(star.tier);
+  el.dataset.starId = star.id;
   el.innerHTML = `
     <div class="reel-name">${star.name}</div>
     <div class="reel-class">${star.class}</div>
@@ -57,6 +58,8 @@ function renderPedia() {
 }
 
 let spinning = false;
+let currentWinner = null;
+let spinTimeoutId = null;
 
 function spin() {
   if (spinning) return;
@@ -67,7 +70,10 @@ function spin() {
   $("result-panel").className = "result-panel hidden";
 
   const winner = rollStar();
-  const viewportWidth = $("reel-viewport").clientWidth;
+  currentWinner = winner;
+
+  const viewport = $("reel-viewport");
+  const viewportWidth = viewport.clientWidth;
   const visible = Math.ceil(viewportWidth / ITEM_WIDTH) + 2;
   const total = visible + REEL_EXTRA;
   const winnerIndex = total - 4;
@@ -86,37 +92,52 @@ function spin() {
 
   requestAnimationFrame(() => {
     const stripRect = track.getBoundingClientRect();
+    const viewportRect = viewport.getBoundingClientRect();
     const winnerEl = $("winner-item");
     const winnerRect = winnerEl.getBoundingClientRect();
     const winnerCenter = winnerRect.left - stripRect.left + winnerRect.width / 2;
-    const target = window.innerWidth / 2 - winnerCenter - stripRect.left;
+    const viewportCenter = viewportRect.left + viewportRect.width / 2;
+    const target = viewportCenter - winnerCenter - stripRect.left;
     track.style.transition = `transform ${SPIN_DURATION}ms cubic-bezier(0.15, 0.9, 0.25, 1)`;
     track.style.transform = `translateX(${target}px)`;
   });
 
-  setTimeout(() => finishSpin(winner), SPIN_DURATION);
+  clearTimeout(spinTimeoutId);
+  spinTimeoutId = setTimeout(() => finishSpin(winner), SPIN_DURATION);
 }
 
 function skipSpin() {
-  // Fast-forward: complete immediately
+  if (!spinning) return;
+  clearTimeout(spinTimeoutId);
+  spinTimeoutId = null;
+
   const track = $("reel-track");
-  if (!track) return;
-  track.style.transition = "none";
   const winner = $("winner-item");
-  if (!winner) return;
+  if (!track || !winner) {
+    finishSpin(currentWinner);
+    return;
+  }
+  track.style.transition = "none";
   const stripRect = track.getBoundingClientRect();
+  const viewport = $("reel-viewport");
+  const viewportRect = viewport.getBoundingClientRect();
   const winnerRect = winner.getBoundingClientRect();
   const winnerCenter = winnerRect.left - stripRect.left + winnerRect.width / 2;
-  const target = window.innerWidth / 2 - winnerCenter - stripRect.left;
+  const viewportCenter = viewportRect.left + viewportRect.width / 2;
+  const target = viewportCenter - winnerCenter - stripRect.left;
   track.style.transform = `translateX(${target}px)`;
+
   const starId = winner.dataset.starId;
-  // Find the actual star object matching this id
-  const star = STARS.find((s) => s.id === starId) || rollStar();
+  const star = STARS.find((s) => s.id === starId) || currentWinner || rollStar();
   finishSpin(star);
 }
 
 function finishSpin(star) {
+  if (!spinning) return;
   spinning = false;
+  clearTimeout(spinTimeoutId);
+  spinTimeoutId = null;
+
   $("skip-btn").classList.add("hidden");
   $("open-btn").disabled = false;
 
@@ -137,9 +158,16 @@ function finishSpin(star) {
 }
 
 function init() {
+  const missing = ["pedia-grid", "pedia-count", "reel-viewport", "reel-track", "open-btn", "skip-btn", "result-panel"]
+    .filter((id) => !document.getElementById(id));
+  if (missing.length) {
+    console.error("case-opener: missing elements", missing);
+    return;
+  }
   renderPedia();
   $("open-btn").addEventListener("click", spin);
   $("skip-btn").addEventListener("click", skipSpin);
+  console.log("case-opener: boot ok");
 }
 
 init();
